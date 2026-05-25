@@ -623,8 +623,29 @@ end
 
 searchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local q = string.lower(searchBox.Text)
+    
     for _, e in ipairs(playerList:GetChildren()) do
-        if e:IsA("Frame") then e.Visible = #q == 0 or string.find(string.lower(e.Name), q, 1, true) ~= nil end
+        if e:IsA("Frame") then
+            -- Default to false if no match, true if query is empty
+            local isVisible = (#q == 0)
+            
+            if not isVisible then
+                -- 1. Check against the Frame's name (Username)
+                local nameMatch = string.find(string.lower(e.Name), q, 1, true) ~= nil
+                
+                -- 2. Check against the Player's DisplayName
+                local displayNameMatch = false
+                local player = Players:FindFirstChild(e.Name)
+                if player then
+                    displayNameMatch = string.find(string.lower(player.DisplayName), q, 1, true) ~= nil
+                end
+                
+                -- Combine them: visible if either matches
+                isVisible = nameMatch or displayNameMatch
+            end
+            
+            e.Visible = isVisible
+        end
     end
 end)
 
