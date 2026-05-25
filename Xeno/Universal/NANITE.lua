@@ -32,7 +32,25 @@ local espConns      = {}
 local notifs        = {}
 local spectateTarget = nil     -- Player currently being spectated, or nil
 local ghostDef      = {}       -- original transparencies for Ghost
+local function readfile_json()
+    if isfile and isfile("Nanite/config.json") then
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(readfile("Nanite/config.json"))
+        end)
+        if success then return result end
+        warn("[nanite] Failed to decode config.json:", result)
+    end
+    return {}
+end
 
+local function writefile_json(data)
+    if isfolder and not isfolder("Nanite") then
+        makefolder("Nanite")
+    end
+    if writefile then
+        writefile("Nanite/config.json", HttpService:JSONEncode(data))
+    end
+end   
 -- ── Actions config ────────────────────────────────────────────────────────────
 local ACTIONS = {
     { name = "Noclip",       color = Color3.fromRGB(0,   200, 140), en = false },
@@ -82,6 +100,8 @@ local SLIDERS = {
       lo = 0,  hi = 500, def = 196, val = 196, active = false,
       fn = function(v) workspace.Gravity = v end },
 }
+-- Assuming readfile_json() returns a table or nil
+local read = readfile_json()
 
 -- ── Keybinds config ───────────────────────────────────────────────────────────
 local KEYBINDS = {
@@ -93,6 +113,12 @@ local KEYBINDS = {
     { name = "Click-TP",     id = "clicktp",   cur = nil },
     { name = "Respawn",      id = "respawn",   cur = nil },
 }
+
+-- If 'read' exists and isn't empty, overwrite KEYBINDS with it
+-- next(read) checks if the table has any keys inside it
+if read and next(read) ~= nil then
+    KEYBINDS = read
+end
 
 -- ── Theme ─────────────────────────────────────────────────────────────────────
 local BG  = Color3.fromRGB(10,  10,  10 )
@@ -760,8 +786,16 @@ UserInputService.InputBegan:Connect(function(input, processed)
     if checkingKey then
         if input.KeyCode ~= Enum.KeyCode.Unknown then
             local parts = string.split(tostring(input.KeyCode), ".")
-            checkingKey.kb.cur = parts[3]; checkingKey.box.Text = parts[3]
-            checkingKey.box:ReleaseFocus(); checkingKey = false
+            
+            -- 1. OVERWRITES THE DATA IN YOUR TABLE:
+            checkingKey.kb.cur = parts[3] 
+            
+            -- 2. OVERWRITES THE VISUAL TEXT IN THE UI:
+            checkingKey.box.Text = parts[3]
+            
+            checkingKey.box:ReleaseFocus()
+            checkingKey = false
+            writefile_json(KEYBINDS)
         end
         return
     end
