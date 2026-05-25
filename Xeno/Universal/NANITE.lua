@@ -14,7 +14,7 @@ local StatsService     = game:GetService("Stats")
 local GuiService       = game:GetService("GuiService")
 local VirtualUser      = game:GetService("VirtualUser")
 local Lighting         = game:GetService("Lighting")
-
+local HttpService      = game:GetService("HttpService")
 -- ── Core refs ─────────────────────────────────────────────────────────────────
 local LP      = Players.LocalPlayer
 local Cam     = workspace.CurrentCamera
